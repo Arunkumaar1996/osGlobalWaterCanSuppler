@@ -1,0 +1,81 @@
+{
+  "name": "AquaFlow Water Delivery",
+  "short_name": "AquaFlow",
+  "description": "Pure 20L Drinking Water Can Ordering, Automated Subscriptions, and Doorstep Tracking",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0284c7",
+  "theme_color": "#0284c7",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "business",
+    "shopping",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "/assets/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Order Water Cans",
+      "short_name": "Order",
+      "description": "Order purified water cans for your home or office",
+      "url": "/#products",
+      "icons": [
+        {
+          "src": "/assets/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "My Orders",
+      "short_name": "Orders",
+      "description": "Track ongoing deliveries and past water orders",
+      "url": "/customer/orders",
+      "icons": [
+        {
+          "src": "/assets/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Staff Runsheet",
+      "short_name": "Runsheet",
+      "description": "Delivery staff runsheet and doorstep OTP verifier",
+      "url": "/staff/deliveries",
+      "icons": [
+        {
+          "src": "/assets/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
