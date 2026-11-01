@@ -77,4 +77,22 @@ class CartTest extends TestCase
             'id' => $item->id,
         ]);
     }
+
+    public function test_user_can_toggle_can_exchange_mode_for_new_customer(): void
+    {
+        $customer = User::where('mobile', '9876543213')->first();
+        $product = Product::first();
+
+        $this->actingAs($customer)->post('/cart/add', ['product_id' => $product->id, 'quantity' => 2]);
+
+        // Toggle to new customer mode (no empty cans to return, adds deposit)
+        $response = $this->actingAs($customer)->post('/cart/exchange-mode', [
+            'has_empty_cans_to_exchange' => 0,
+        ]);
+
+        $response->assertRedirect('/cart');
+        $cart = \App\Models\Cart::where('user_id', $customer->id)->first();
+        $this->assertFalse((bool) $cart->has_empty_cans_to_exchange);
+        $this->assertEquals(300.00, $cart->calculateDepositAmount()); // 2 cans * 150 deposit
+    }
 }

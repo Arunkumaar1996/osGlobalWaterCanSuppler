@@ -31,7 +31,8 @@ class OrderService
         int $slotId,
         string $paymentMethod,
         ?string $customerNotes = null,
-        ?string $idempotencyKey = null
+        ?string $idempotencyKey = null,
+        ?bool $hasEmptyCansToExchange = null
     ): Order {
         // 1. Idempotency Check
         $idempotencyKey = $idempotencyKey ?: 'IDEMP_' . $user->id . '_' . time() . '_' . rand(1000, 9999);
@@ -65,10 +66,16 @@ class OrderService
             throw new InvalidArgumentException("Delivery is currently not available for address pincode {$address->pincode}.");
         }
 
-        // 5. Calculate Server-Side Subtotal, Litres & Delivery Fee
+        // 5. Calculate Server-Side Subtotal, Litres, Deposit & Delivery Fee
+        $hasEmptyCansToExchange = $hasEmptyCansToExchange !== null
+            ? (bool) $hasEmptyCansToExchange
+            : (bool) ($cart->has_empty_cans_to_exchange ?? true);
+
         $subtotal = 0.00;
         $taxTotal = 0.00;
         $totalLitres = 0.00;
+        $depositAmount = 0.00;
+        $exchangeableCount = 0;
 
         foreach ($cart->items as $item) {
             $product = $item->product;
@@ -80,14 +87,24 @@ class OrderService
             $taxTotal += $taxAmount;
 
             $totalLitres += ($item->quantity * (float) $product->capacity_value);
+
+            if ($product->requires_can_exchange) {
+                $exchangeableCount += $item->quantity;
+                if (! $hasEmptyCansToExchange) {
+                    $canDeposit = (float) ($product->canType?->deposit_amount ?? 150.00);
+                    $depositAmount += ($item->quantity * $canDeposit);
+                }
+            }
         }
+
+        $emptyCansExpected = $hasEmptyCansToExchange ? $exchangeableCount : 0;
 
         // Delivery fee based on zone threshold
         $deliveryCharge = ($subtotal >= (float) $pincodeRecord->min_order_amount)
             ? 0.00
             : (float) $pincodeRecord->delivery_charge;
 
-        $totalPayable = $subtotal + $deliveryCharge;
+        $totalPayable = $subtotal + $deliveryCharge + $depositAmount;
 
         // 6. Validate Pay Later Eligibility & Credit Limits
         if ($paymentMethod === 'pay_later') {
@@ -107,7 +124,8 @@ class OrderService
         return DB::transaction(function () use (
             $user, $profile, $cart, $address, $deliveryDate, $slotId, 
             $paymentMethod, $customerNotes, $idempotencyKey, 
-            $subtotal, $taxTotal, $deliveryCharge, $totalPayable, $totalLitres
+            $subtotal, $taxTotal, $deliveryCharge, $depositAmount, $totalPayable, $totalLitres,
+            $hasEmptyCansToExchange, $emptyCansExpected
         ) {
             // A. Atomically Reserve Slot Capacity
             $this->slotService->reserveCapacity($slotId, $deliveryDate, $totalLitres);
@@ -150,10 +168,13 @@ class OrderService
                 'tax_amount' => $taxTotal,
                 'delivery_charge' => $deliveryCharge,
                 'discount_amount' => 0.00,
+                'deposit_amount' => $depositAmount,
                 'total_amount' => $totalPayable,
                 'paid_amount' => 0.00,
                 'previous_outstanding_at_order' => (float) $profile->outstanding_financial_balance,
                 'payment_method_preferred' => $paymentMethod,
+                'has_empty_cans_to_exchange' => $hasEmptyCansToExchange,
+                'empty_cans_expected' => $emptyCansExpected,
                 'delivery_date' => Carbon::parse($deliveryDate)->format('Y-m-d'),
                 'delivery_slot_id' => $slotId,
                 'customer_notes' => $customerNotes,

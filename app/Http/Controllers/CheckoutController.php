@@ -81,6 +81,8 @@ class CheckoutController extends Controller
         }
 
         $subtotal = $cart->calculateSubtotal();
+        $depositAmount = $cart->calculateDepositAmount();
+        $exchangeableCount = $cart->totalExchangeableCansCount();
 
         // Determine estimated delivery charge based on default address
         $defaultAddress = $addresses->firstWhere('is_default', true) ?? $addresses->first();
@@ -92,14 +94,14 @@ class CheckoutController extends Controller
             }
         }
 
-        $totalPayable = $subtotal + $deliveryCharge;
+        $totalPayable = $subtotal + $deliveryCharge + $depositAmount;
         $previousDue = (float) $profile->outstanding_financial_balance;
         $allowPayLater = (bool) $profile->allow_pay_later && (($previousDue + $totalPayable) <= (float) $profile->credit_limit);
 
         return view('checkout.index', compact(
             'cart', 'profile', 'addresses', 'deliveryDates', 'slots', 
-            'initialDate', 'subtotal', 'deliveryCharge', 'totalPayable', 
-            'previousDue', 'allowPayLater', 'totalLitres'
+            'initialDate', 'subtotal', 'deliveryCharge', 'depositAmount', 
+            'exchangeableCount', 'totalPayable', 'previousDue', 'allowPayLater', 'totalLitres'
         ));
     }
 
@@ -141,6 +143,7 @@ class CheckoutController extends Controller
             'delivery_date' => ['required', 'date', 'after_or_equal:today'],
             'delivery_slot_id' => ['required', 'exists:delivery_slots,id'],
             'payment_method' => ['required', 'in:cod,pay_later,razorpay'],
+            'has_empty_cans_to_exchange' => ['nullable', 'boolean'],
             'customer_notes' => ['nullable', 'string', 'max:500'],
             'idempotency_key' => ['nullable', 'string', 'max:100'],
         ]);
@@ -148,6 +151,10 @@ class CheckoutController extends Controller
         $user = $request->user();
         $branchId = session('active_branch_id', 1);
         $cart = $this->cartService->getOrCreateCart($user, $request->session()->getId(), $branchId);
+
+        $hasEmptyCans = $request->has('has_empty_cans_to_exchange')
+            ? $request->boolean('has_empty_cans_to_exchange')
+            : (bool) ($cart->has_empty_cans_to_exchange ?? true);
 
         try {
             $order = $this->orderService->createOrderFromCart(
@@ -158,7 +165,8 @@ class CheckoutController extends Controller
                 (int) $validated['delivery_slot_id'],
                 $validated['payment_method'],
                 $validated['customer_notes'] ?? null,
-                $validated['idempotency_key'] ?? null
+                $validated['idempotency_key'] ?? null,
+                $hasEmptyCans
             );
 
             return redirect()->route('customer.orders.show', $order->id)

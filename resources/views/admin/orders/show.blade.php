@@ -208,6 +208,16 @@
                     <span>Delivery Charges</span>
                     <span>₹{{ number_format($order->delivery_charge, 2) }}</span>
                 </div>
+                @if($order->deposit_amount > 0)
+                <div class="flex justify-between text-amber-700 bg-amber-50 p-1.5 rounded-lg border border-amber-200 text-[11px] font-sans">
+                    <span>Refundable Bottle Deposit</span>
+                    <span>+₹{{ number_format($order->deposit_amount, 2) }}</span>
+                </div>
+                @endif
+                <div class="flex justify-between text-slate-600 text-[11px] font-sans">
+                    <span>Can Exchange:</span>
+                    <span>{{ $order->has_empty_cans_to_exchange ? '1:1 Return (' . $order->empty_cans_expected . ' empties)' : 'New Customer (0 empties)' }}</span>
+                </div>
                 <div class="flex justify-between text-slate-600 font-sans">
                     <span>Tax (GST)</span>
                     <span>₹{{ number_format($order->tax_amount, 2) }}</span>

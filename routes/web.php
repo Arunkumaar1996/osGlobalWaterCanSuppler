@@ -43,6 +43,7 @@ Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
 Route::post('/cart/update/{id}', [CartController::class, 'update'])->name('cart.update');
 Route::post('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
+Route::post('/cart/exchange-mode', [CartController::class, 'updateExchangeMode'])->name('cart.exchange-mode');
 
 // Checkout Routes (Requires Authentication)
 Route::middleware(['auth'])->group(function () {

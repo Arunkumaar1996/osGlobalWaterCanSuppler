@@ -30,8 +30,45 @@ class CartController extends Controller
         $subtotal = $cart->calculateSubtotal();
         $totalLitres = $cart->calculateTotalLitres();
         $hasExchanges = $cart->hasExchangeableCans();
+        $exchangeableCount = $cart->totalExchangeableCansCount();
+        $depositAmount = $cart->calculateDepositAmount();
+        $totalPayable = $subtotal + $depositAmount;
 
-        return view('cart.index', compact('cart', 'subtotal', 'totalLitres', 'hasExchanges'));
+        return view('cart.index', compact(
+            'cart', 'subtotal', 'totalLitres', 'hasExchanges', 
+            'exchangeableCount', 'depositAmount', 'totalPayable'
+        ));
+    }
+
+    /**
+     * Update customer can exchange preference (1:1 exchange vs new cans with deposit)
+     */
+    public function updateExchangeMode(Request $request): RedirectResponse|JsonResponse
+    {
+        $validated = $request->validate([
+            'has_empty_cans_to_exchange' => ['required', 'boolean'],
+        ]);
+
+        $branchId = session('active_branch_id', 1);
+        $cart = $this->cartService->getOrCreateCart(
+            $request->user(),
+            $request->session()->getId(),
+            $branchId
+        );
+
+        $cart->update(['has_empty_cans_to_exchange' => $validated['has_empty_cans_to_exchange']]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'has_empty_cans_to_exchange' => (bool) $cart->has_empty_cans_to_exchange,
+                'deposit_amount' => $cart->calculateDepositAmount(),
+                'subtotal' => $cart->calculateSubtotal(),
+                'total_payable' => $cart->calculateSubtotal() + $cart->calculateDepositAmount(),
+            ]);
+        }
+
+        return redirect()->route('cart.index')->with('success', 'Can exchange preference updated.');
     }
 
     /**

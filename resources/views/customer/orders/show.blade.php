@@ -186,6 +186,18 @@
                     <span>Subtotal</span>
                     <span class="font-bold text-slate-800">₹{{ number_format($order->subtotal_amount, 2) }}</span>
                 </div>
+                @if($order->deposit_amount > 0)
+                    <div class="flex items-center justify-between text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-200">
+                        <span>Refundable Can Deposit</span>
+                        <span class="font-bold">+₹{{ number_format($order->deposit_amount, 2) }}</span>
+                    </div>
+                @endif
+                <div class="flex items-center justify-between text-slate-600">
+                    <span>Can Exchange</span>
+                    <span class="font-semibold text-slate-900">
+                        {{ $order->has_empty_cans_to_exchange ? '1:1 Exchange (' . $order->empty_cans_expected . ' empties)' : 'New Customer (No empties required)' }}
+                    </span>
+                </div>
                 <div class="flex items-center justify-between text-slate-600">
                     <span>Delivery Charge</span>
                     <span class="font-bold text-slate-800">{{ $order->delivery_charge == 0 ? 'FREE' : '₹' . number_format($order->delivery_charge, 2) }}</span>

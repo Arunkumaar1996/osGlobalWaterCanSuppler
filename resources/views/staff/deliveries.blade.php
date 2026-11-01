@@ -124,6 +124,19 @@
                         </div>
                     </div>
 
+                    <!-- Can Exchange Status Badge for Staff Driver -->
+                    <div class="flex items-center gap-2 pt-0.5">
+                        @if($ord->has_empty_cans_to_exchange)
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-900/60 text-cyan-300 border border-cyan-700/50">
+                                1:1 Exchange &bull; Collect {{ $ord->empty_cans_expected ?: $totalCans }} empties
+                            </span>
+                        @else
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-900/60 text-amber-300 border border-amber-700/50">
+                                🆕 New Customer &bull; 0 empties to collect (Deposit Paid)
+                            </span>
+                        @endif
+                    </div>
+
                     <!-- Action Buttons Bar -->
                     <div class="grid grid-cols-3 gap-2 pt-1">
                         <!-- Call Button -->
