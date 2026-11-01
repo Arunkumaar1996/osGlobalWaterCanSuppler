@@ -66,6 +66,18 @@
       ]
     },
     {
+      "name": "Can Passbook",
+      "short_name": "Passbook",
+      "description": "Check your container holding balance and returns",
+      "url": "/customer/cans",
+      "icons": [
+        {
+          "src": "/assets/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
       "name": "Staff Runsheet",
       "short_name": "Runsheet",
       "description": "Delivery staff runsheet and doorstep OTP verifier",

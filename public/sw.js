@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aquaflow-cache-v1.3';
+const CACHE_NAME = 'aquaflow-cache-v1.4';
 const OFFLINE_URL = '/offline';
 
 const PRECACHE_ASSETS = [

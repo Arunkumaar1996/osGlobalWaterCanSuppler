@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CustomerProfile;
 use App\Models\Order;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -14,7 +16,7 @@ class CustomerOrderController extends Controller
     public function dashboard(Request $request): View
     {
         $user = $request->user();
-        $profile = $user->customerProfile ?? \App\Models\CustomerProfile::firstOrCreate(
+        $profile = $user->customerProfile ?? CustomerProfile::firstOrCreate(
             ['user_id' => $user->id],
             [
                 'branch_id' => session('active_branch_id', 1),
@@ -25,7 +27,7 @@ class CustomerOrderController extends Controller
             ]
         );
 
-        $recentOrders = Order::with(['items.product', 'deliverySlot'])
+        $recentOrders = Order::with(['items.product', 'deliverySlot', 'tripStops.trip'])
             ->where('customer_profile_id', $profile->id)
             ->latest('id')
             ->take(5)
@@ -35,7 +37,18 @@ class CustomerOrderController extends Controller
             ->whereIn('delivery_status', ['pending', 'assigned', 'out_for_delivery'])
             ->count();
 
-        return view('customer.dashboard', compact('profile', 'recentOrders', 'activeDeliveriesCount'));
+        // Active ongoing delivery for PWA live status tracking
+        $activeOrder = Order::with(['items.product', 'deliverySlot', 'tripStops.trip.staffProfile.user'])
+            ->where('customer_profile_id', $profile->id)
+            ->whereIn('delivery_status', ['pending', 'assigned', 'out_for_delivery'])
+            ->latest('id')
+            ->first();
+
+        $primaryProduct = Product::where('is_active', true)
+            ->where('capacity_value', 20)
+            ->first() ?? Product::where('is_active', true)->first();
+
+        return view('customer.dashboard', compact('profile', 'recentOrders', 'activeDeliveriesCount', 'activeOrder', 'primaryProduct'));
     }
 
     /**

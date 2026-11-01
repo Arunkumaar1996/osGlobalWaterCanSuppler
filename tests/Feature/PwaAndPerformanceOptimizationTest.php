@@ -85,4 +85,19 @@ class PwaAndPerformanceOptimizationTest extends TestCase
         $this->assertStringContainsString('mod_expires.c', $content);
         $this->assertStringContainsString('X-Content-Type-Options "nosniff"', $content);
     }
+
+    public function test_customer_portal_renders_with_pwa_smart_banner_and_bottom_nav(): void
+    {
+        $customer = \App\Models\User::where('mobile', '9876543213')->first();
+
+        $response = $this->actingAs($customer)->get(route('customer.dashboard'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Install AquaFlow Water App');
+        $response->assertSee('mobile-bottom-nav', false);
+        $response->assertSee('Can Passbook');
+        $response->assertSee('Dues & Ledger', false);
+        $response->assertSee('Subscribe');
+        $response->assertSee('Install on iPhone / iPad');
+    }
 }

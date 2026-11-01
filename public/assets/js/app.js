@@ -76,3 +76,37 @@ if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || wi
             });
     });
 }
+
+// 5. PWA Install Engine & Device Utilities
+window.deferredPwaPrompt = null;
+window.isPwaStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    window.deferredPwaPrompt = e;
+    window.dispatchEvent(new CustomEvent('pwa-installable'));
+});
+
+window.addEventListener('appinstalled', () => {
+    window.deferredPwaPrompt = null;
+    window.isPwaStandalone = true;
+    window.dispatchEvent(new CustomEvent('pwa-installed'));
+    window.showToast('AquaFlow App installed successfully!', 'success');
+});
+
+window.triggerPwaInstall = async function () {
+    if (window.deferredPwaPrompt) {
+        window.deferredPwaPrompt.prompt();
+        const { outcome } = await window.deferredPwaPrompt.userChoice;
+        if (outcome === 'accepted') {
+            window.deferredPwaPrompt = null;
+            window.dispatchEvent(new CustomEvent('pwa-installed'));
+        }
+        return outcome;
+    }
+    return null;
+};
+
+window.isIosDevice = function () {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+};

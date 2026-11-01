@@ -2,7 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-slate-50">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name', 'AquaFlow')) - Pure Drinking Water Delivery</title>
 
@@ -12,9 +12,11 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
     <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
     <meta name="theme-color" content="#0284c7">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="AquaFlow">
+    <meta name="application-name" content="AquaFlow">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
