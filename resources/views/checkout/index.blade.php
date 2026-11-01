@@ -175,17 +175,17 @@
                             :class="hasEmptyCans ? 'border-brand-500 bg-brand-50/40 ring-1 ring-brand-500' : 'border-slate-200 hover:border-slate-300'">
                             <input type="radio" name="has_empty_cans_to_exchange" value="1" x-model="hasEmptyCans" class="mt-1 h-4 w-4 text-brand-600 focus:ring-brand-500 border-slate-300">
                             <div class="text-xs">
-                                <span class="font-bold text-slate-900 text-sm block">Yes, I have empty cans (1:1 Exchange)</span>
+                                <span class="font-bold text-slate-900 text-sm block">Yes, I have empty cans (1:1 Equal Exchange)</span>
                                 <span class="text-slate-500 block mt-1 leading-normal">
-                                    I will return {{ $exchangeableCount }} matching empty cans to the driver. Pay refill price only.
+                                    I will hand over {{ $exchangeableCount }} matching empty cans to the driver in exchange for {{ $exchangeableCount }} refilled cans.
                                 </span>
                                 <span class="inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                                    Can Deposit: ₹0 (No extra charge)
+                                    Can Deposit: ₹0 (Water Only &bull; 1:1 Equal Exchange)
                                 </span>
                             </div>
                         </label>
 
-                        <!-- Option 2: New Customer / No Empty Cans (Refundable Deposit) -->
+                        <!-- Option 2: New Customer / No Empty Cans -->
                         <label class="p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3"
                             :class="!hasEmptyCans ? 'border-brand-500 bg-brand-50/40 ring-1 ring-brand-500' : 'border-slate-200 hover:border-slate-300'">
                             <input type="radio" name="has_empty_cans_to_exchange" value="0" x-model="hasEmptyCans" class="mt-1 h-4 w-4 text-brand-600 focus:ring-brand-500 border-slate-300">
@@ -194,12 +194,21 @@
                                     <span class="font-bold text-slate-900 text-sm block">No, I'm a new customer</span>
                                     <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-brand-100 text-brand-700">New User</span>
                                 </div>
-                                <span class="text-slate-500 block mt-1 leading-normal">
-                                    Don't have empty cans yet? A refundable bottle deposit of ₹150/can is added. 100% refundable upon return.
-                                </span>
-                                <span class="inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
-                                    Refundable Deposit: +₹{{ number_format($exchangeableCount * 150, 2) }}
-                                </span>
+                                @if(!empty($chargeNewCustomerDeposit))
+                                    <span class="text-slate-500 block mt-1 leading-normal">
+                                        Don't have empty cans yet? A refundable bottle deposit of ₹{{ number_format($depositPerCan ?? 150, 2) }}/can is added. 100% refundable upon return.
+                                    </span>
+                                    <span class="inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
+                                        Refundable Deposit: +₹{{ number_format($exchangeableCount * ($depositPerCan ?? 150), 2) }}
+                                    </span>
+                                @else
+                                    <span class="text-slate-500 block mt-1 leading-normal">
+                                        Don't have empty cans? Zero bottle deposit collected! As a new customer, you pay <strong>ONLY for the water refill</strong> (0 empty cans collected).
+                                    </span>
+                                    <span class="inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                        Deposit Waived: ₹0.00 (Water Refill Only)
+                                    </span>
+                                @endif
                             </div>
                         </label>
                     </div>
@@ -343,19 +352,19 @@
                     </div>
 
                     <!-- Can Deposit Line -->
-                    <template x-if="!hasEmptyCans">
-                        <div class="flex items-center justify-between text-amber-700 bg-amber-50 p-2 rounded-xl border border-amber-200">
+                    <template x-if="!hasEmptyCans && chargeNewCustomerDeposit && depositPerCan > 0">
+                        <div class="flex items-center justify-between text-amber-700 bg-amber-50 p-2.5 rounded-xl border border-amber-200">
                             <div>
                                 <span class="font-bold block">Can Security Deposit</span>
-                                <span class="text-[10px] text-amber-600">{{ $exchangeableCount }} cans &times; ₹150 (Refundable)</span>
+                                <span class="text-[10px] text-amber-600">{{ $exchangeableCount }} cans &times; ₹{{ number_format($depositPerCan ?? 150, 2) }} (Refundable)</span>
                             </div>
                             <span class="font-black text-xs text-amber-900" x-text="'+₹' + (depositPerCan * {{ $exchangeableCount }}).toFixed(2)"></span>
                         </div>
                     </template>
-                    <template x-if="hasEmptyCans">
+                    <template x-if="hasEmptyCans || !chargeNewCustomerDeposit || depositPerCan == 0">
                         <div class="flex items-center justify-between text-slate-600">
                             <span>Can Deposit</span>
-                            <span class="text-emerald-600 font-bold">₹0.00 (1:1 Exchange)</span>
+                            <span class="text-emerald-600 font-bold" x-text="hasEmptyCans ? '₹0.00 (1:1 Equal Exchange)' : '₹0.00 (Water Refill Only)'"></span>
                         </div>
                     </template>
 
@@ -395,12 +404,17 @@
                 <div class="p-3 bg-brand-50 border border-brand-200 rounded-xl text-[11px] text-brand-900 leading-tight">
                     <template x-if="hasEmptyCans">
                         <div>
-                            <strong>1:1 Can Exchange:</strong> Please keep {{ $exchangeableCount }} empty can(s) ready for our driver.
+                            <strong>1:1 Equal Can Exchange:</strong> Hand over {{ $exchangeableCount }} matching empty can(s) to our driver in exchange for {{ $exchangeableCount }} refilled cans.
                         </div>
                     </template>
-                    <template x-if="!hasEmptyCans">
+                    <template x-if="!hasEmptyCans && chargeNewCustomerDeposit && depositPerCan > 0">
                         <div>
-                            <strong>New Customer Order:</strong> Zero empty cans required. Bottle deposit is 100% refundable upon return.
+                            <strong>New Customer Order:</strong> Zero empty cans required. Bottle deposit of ₹{{ number_format($depositPerCan ?? 150, 2) }}/can is 100% refundable upon return.
+                        </div>
+                    </template>
+                    <template x-if="!hasEmptyCans && (!chargeNewCustomerDeposit || depositPerCan == 0)">
+                        <div>
+                            <strong>New Customer Order:</strong> Zero empty cans required. Bottle deposit is <strong>WAIVED (₹0.00)</strong> — pay strictly for the water refill!
                         </div>
                     </template>
                 </div>
@@ -438,11 +452,12 @@
             availableSlots: @json($slots->map(fn($s) => ['id' => $s->id, 'name' => $s->name, 'time_range' => $s->formatted_time_range])),
             subtotal: {{ (float) $subtotal }},
             deliveryCharge: {{ (float) $deliveryCharge }},
-            depositPerCan: 150.00,
+            depositPerCan: {{ (float) ($depositPerCan ?? 0.00) }},
+            chargeNewCustomerDeposit: {{ !empty($chargeNewCustomerDeposit) ? 'true' : 'false' }},
             exchangeableCount: {{ (int) $exchangeableCount }},
 
             get totalAmount() {
-                let deposit = (!this.hasEmptyCans) ? (this.depositPerCan * this.exchangeableCount) : 0;
+                let deposit = (!this.hasEmptyCans && this.chargeNewCustomerDeposit) ? (this.depositPerCan * this.exchangeableCount) : 0;
                 let total = this.subtotal + this.deliveryCharge + deposit;
                 return total.toFixed(2);
             },

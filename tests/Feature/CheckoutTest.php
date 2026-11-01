@@ -185,18 +185,65 @@ class CheckoutTest extends TestCase
         $response->assertSee('Ordered Items');
     }
 
-    public function test_new_customer_without_empty_cans_orders_with_can_deposit(): void
+    public function test_new_customer_without_empty_cans_charged_water_only_by_default(): void
     {
         $customer = User::where('mobile', '9876543213')->first();
         $product = Product::where('slug', '20-litre-bubble-top-water-can')->first();
         $address = CustomerAddress::where('customer_profile_id', $customer->customerProfile->id)->first();
         $slot = DeliverySlot::first();
 
+        // Ensure branch policy is default: charge_new_customer_deposit = false (water only)
+        $branch = \App\Models\Branch::first();
+        $branch->update(['charge_new_customer_deposit' => false]);
+
         $this->actingAs($customer)->post('/cart/add', ['product_id' => $product->id, 'quantity' => 2]);
 
         $deliveryDate = Carbon::today()->addDay()->format('Y-m-d');
 
         // Order as new customer (no empty cans to return)
+        $response = $this->actingAs($customer)->post('/checkout/process', [
+            'delivery_address_id' => $address->id,
+            'delivery_date' => $deliveryDate,
+            'delivery_slot_id' => $slot->id,
+            'payment_method' => 'cod',
+            'has_empty_cans_to_exchange' => 0,
+        ]);
+
+        $order = Order::where('customer_profile_id', $customer->customerProfile->id)->latest('id')->first();
+        $this->assertNotNull($order);
+        $response->assertRedirect(route('customer.orders.show', $order->id));
+
+        $this->assertFalse((bool) $order->has_empty_cans_to_exchange);
+        $this->assertEquals(0, $order->empty_cans_expected);
+        $this->assertEquals(0.00, (float) $order->deposit_amount); // Deposit waived: ₹0.00
+        $this->assertEquals(160.00, (float) $order->total_amount); // 2 cans x 80 = 160 water only!
+
+        // View order details page as customer
+        $viewResponse = $this->actingAs($customer)->get(route('customer.orders.show', $order->id));
+        $viewResponse->assertStatus(200);
+        $viewResponse->assertSee('New Customer');
+        $viewResponse->assertSee('Water Only');
+    }
+
+    public function test_new_customer_without_empty_cans_orders_with_can_deposit_when_enabled_by_admin(): void
+    {
+        $customer = User::where('mobile', '9876543213')->first();
+        $product = Product::where('slug', '20-litre-bubble-top-water-can')->first();
+        $address = CustomerAddress::where('customer_profile_id', $customer->customerProfile->id)->first();
+        $slot = DeliverySlot::first();
+
+        // Admin enables deposit charging
+        $branch = \App\Models\Branch::first();
+        $branch->update([
+            'charge_new_customer_deposit' => true,
+            'new_customer_deposit_amount' => 150.00,
+        ]);
+
+        $this->actingAs($customer)->post('/cart/add', ['product_id' => $product->id, 'quantity' => 2]);
+
+        $deliveryDate = Carbon::today()->addDay()->format('Y-m-d');
+
+        // Order as new customer with deposit enabled
         $response = $this->actingAs($customer)->post('/checkout/process', [
             'delivery_address_id' => $address->id,
             'delivery_date' => $deliveryDate,
@@ -219,5 +266,40 @@ class CheckoutTest extends TestCase
         $viewResponse->assertStatus(200);
         $viewResponse->assertSee('Refundable Can Deposit');
         $viewResponse->assertSee('New Customer');
+    }
+
+    public function test_old_customer_with_empty_cans_does_1_to_1_equal_exchange(): void
+    {
+        $customer = User::where('mobile', '9876543213')->first();
+        $product = Product::where('slug', '20-litre-bubble-top-water-can')->first();
+        $address = CustomerAddress::where('customer_profile_id', $customer->customerProfile->id)->first();
+        $slot = DeliverySlot::first();
+
+        $this->actingAs($customer)->post('/cart/add', ['product_id' => $product->id, 'quantity' => 3]);
+
+        $deliveryDate = Carbon::today()->addDay()->format('Y-m-d');
+
+        // Order as old customer with 1:1 equal exchange
+        $response = $this->actingAs($customer)->post('/checkout/process', [
+            'delivery_address_id' => $address->id,
+            'delivery_date' => $deliveryDate,
+            'delivery_slot_id' => $slot->id,
+            'payment_method' => 'cod',
+            'has_empty_cans_to_exchange' => 1,
+        ]);
+
+        $order = Order::where('customer_profile_id', $customer->customerProfile->id)->latest('id')->first();
+        $this->assertNotNull($order);
+        $response->assertRedirect(route('customer.orders.show', $order->id));
+
+        $this->assertTrue((bool) $order->has_empty_cans_to_exchange);
+        $this->assertEquals(3, $order->empty_cans_expected); // 1:1 equal exchange: 3 cans delivered = 3 empties expected!
+        $this->assertEquals(0.00, (float) $order->deposit_amount); // ₹0.00 deposit
+        $this->assertEquals(240.00, (float) $order->total_amount); // 3 x 80 = 240 water refill only!
+
+        // View order details page as customer
+        $viewResponse = $this->actingAs($customer)->get(route('customer.orders.show', $order->id));
+        $viewResponse->assertStatus(200);
+        $viewResponse->assertSee('1:1 Equal Exchange (3 empties)');
     }
 }

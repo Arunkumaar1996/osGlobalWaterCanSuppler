@@ -128,11 +128,11 @@
                     <div class="flex items-center gap-2 pt-0.5">
                         @if($ord->has_empty_cans_to_exchange)
                             <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-900/60 text-cyan-300 border border-cyan-700/50">
-                                1:1 Exchange &bull; Collect {{ $ord->empty_cans_expected ?: $totalCans }} empties
+                                1:1 Exchange &bull; Collect {{ $ord->empty_cans_expected ?: $totalCans }} empties (Equal cans)
                             </span>
                         @else
                             <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-900/60 text-amber-300 border border-amber-700/50">
-                                🆕 New Customer &bull; 0 empties to collect (Deposit Paid)
+                                🆕 New Customer &bull; 0 empties to collect ({{ $ord->deposit_amount > 0 ? 'Deposit Paid' : 'Water Only' }})
                             </span>
                         @endif
                     </div>
@@ -153,7 +153,7 @@
 
                         <!-- Verify OTP & Complete -->
                         @if($stop->status !== 'delivered')
-                            <button type="button" @click="openVerify('{{ $stop->id }}', '{{ $ord->order_number }}', '{{ $totalCans }}', '{{ $codRemaining }}')" class="flex items-center justify-center gap-1 py-2 px-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-md transition-colors">
+                            <button type="button" @click="openVerify('{{ $stop->id }}', '{{ $ord->order_number }}', '{{ $ord->has_empty_cans_to_exchange ? ($ord->empty_cans_expected ?: $totalCans) : 0 }}', '{{ $codRemaining }}')" class="flex items-center justify-center gap-1 py-2 px-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-md transition-colors">
                                 Deliver
                             </button>
                         @else

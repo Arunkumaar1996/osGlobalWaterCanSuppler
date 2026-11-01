@@ -22,6 +22,8 @@ class Branch extends Model
         'city',
         'state',
         'pincode',
+        'charge_new_customer_deposit',
+        'new_customer_deposit_amount',
         'latitude',
         'longitude',
         'is_primary',
@@ -33,6 +35,8 @@ class Branch extends Model
         return [
             'is_primary' => 'boolean',
             'is_active' => 'boolean',
+            'charge_new_customer_deposit' => 'boolean',
+            'new_customer_deposit_amount' => 'decimal:2',
             'latitude' => 'decimal:8',
             'longitude' => 'decimal:8',
         ];

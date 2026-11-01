@@ -60,7 +60,12 @@ class SettingController extends Controller
             'city' => ['required', 'string', 'max:100'],
             'state' => ['required', 'string', 'max:100'],
             'pincode' => ['required', 'string', 'max:20'],
+            'charge_new_customer_deposit' => ['nullable', 'boolean'],
+            'new_customer_deposit_amount' => ['nullable', 'numeric', 'min:0'],
         ]);
+
+        $validated['charge_new_customer_deposit'] = $request->boolean('charge_new_customer_deposit');
+        $validated['new_customer_deposit_amount'] = (float) ($validated['new_customer_deposit_amount'] ?? 0.00);
 
         $branch->update($validated);
 

@@ -105,6 +105,59 @@
                         </div>
                     </div>
 
+                    <!-- New Customer Deposit & Can Exchange Policy Settings -->
+                    <div class="mt-6 pt-5 border-t border-slate-200" x-data="{ chargeDeposit: {{ old('charge_new_customer_deposit', $branch->charge_new_customer_deposit) ? 'true' : 'false' }} }">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="w-6 h-6 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold">♻</span>
+                            <div>
+                                <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Can Exchange & New Customer Deposit Policy</h3>
+                                <p class="text-[11px] text-slate-500">Configure whether new customers pay for water only or pay a bottle deposit.</p>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-4">
+                            <div class="flex items-start gap-3">
+                                <div class="flex items-center h-5 mt-0.5">
+                                    <input type="checkbox" id="charge_new_customer_deposit" name="charge_new_customer_deposit" value="1"
+                                        x-model="chargeDeposit"
+                                        {{ old('charge_new_customer_deposit', $branch->charge_new_customer_deposit) ? 'checked' : '' }}
+                                        class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-slate-300">
+                                </div>
+                                <div class="text-xs">
+                                    <label for="charge_new_customer_deposit" class="font-bold text-slate-900 cursor-pointer">
+                                        Charge Refundable Can Deposit to New Customers
+                                    </label>
+                                    <p class="text-slate-500 mt-0.5 leading-relaxed">
+                                        When <strong class="text-slate-800">UNCHECKED (Recommended / Water Only)</strong>: New customers who have no empty cans are <strong>NOT charged a bottle deposit</strong> (₹0.00 deposit). They only pay the water refill price.
+                                    </p>
+                                    <p class="text-slate-500 mt-1 leading-relaxed">
+                                        When <strong class="text-slate-800">CHECKED</strong>: New customers without empty cans must pay the refundable deposit amount configured below.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div x-show="chargeDeposit" x-transition class="pt-3 border-t border-slate-200/80">
+                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">New Customer Bottle Deposit Amount per Can (₹)</label>
+                                <div class="relative max-w-xs">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-bold text-slate-500">₹</span>
+                                    <input type="number" step="0.01" min="0" name="new_customer_deposit_amount"
+                                        value="{{ old('new_customer_deposit_amount', $branch->new_customer_deposit_amount ?? 150.00) }}"
+                                        class="w-full pl-7 text-xs rounded-xl border-slate-300 focus:ring-brand-500 focus:border-brand-500 font-mono">
+                                </div>
+                                <p class="text-[10px] text-slate-500 mt-1">This deposit is charged per 20L can when a new customer selects 'No empty cans'.</p>
+                            </div>
+
+                            <!-- Old Customer Rule Notice -->
+                            <div class="p-3 rounded-xl bg-white border border-slate-200 flex items-center justify-between text-xs">
+                                <div>
+                                    <span class="font-bold text-slate-800 block">Existing / Old Customer Rule:</span>
+                                    <span class="text-slate-500 text-[11px]">Old customers always undergo <strong>1:1 Equal Exchange</strong> (1 refill delivered = 1 empty can collected back).</span>
+                                </div>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 shrink-0">1:1 Equal Cans</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="pt-4 border-t border-slate-100 flex justify-end">
                         <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs shadow-sm transition-colors">
                             Update Branch Profile
@@ -123,21 +176,31 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
                     <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                        <p class="text-slate-400 font-semibold text-[10px] uppercase">Default 20L Can Deposit</p>
-                        <p class="text-base font-bold text-slate-900 mt-1">₹150.00 / can</p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">Refundable on return</p>
+                        <p class="text-slate-400 font-semibold text-[10px] uppercase">New Customer Policy</p>
+                        @if($branch->charge_new_customer_deposit)
+                            <p class="text-base font-bold text-amber-600 mt-1">₹{{ number_format($branch->new_customer_deposit_amount, 2) }}</p>
+                            <p class="text-[10px] text-slate-400 mt-0.5">Deposit charged</p>
+                        @else
+                            <p class="text-base font-bold text-emerald-600 mt-1">₹0.00 (Water Only)</p>
+                            <p class="text-[10px] text-emerald-600 font-medium mt-0.5">Deposit waived</p>
+                        @endif
                     </div>
                     <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                        <p class="text-slate-400 font-semibold text-[10px] uppercase">Lost / Damaged Penalty</p>
+                        <p class="text-slate-400 font-semibold text-[10px] uppercase">Old Customer Rule</p>
+                        <p class="text-base font-bold text-brand-600 mt-1">1:1 Equal Exchange</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Equal empty cans collected</p>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                        <p class="text-slate-400 font-semibold text-[10px] uppercase">Lost/Damage Penalty</p>
                         <p class="text-base font-bold text-rose-600 mt-1">₹150.00 / can</p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">Debited to customer ledger</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Debited to ledger</p>
                     </div>
                     <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                        <p class="text-slate-400 font-semibold text-[10px] uppercase">Reconciliation Cycle</p>
+                        <p class="text-slate-400 font-semibold text-[10px] uppercase">Audit Cycle</p>
                         <p class="text-base font-bold text-slate-900 mt-1">30 Days Max</p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">Automated overdue alerts</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Auto passbook check</p>
                     </div>
                 </div>
 

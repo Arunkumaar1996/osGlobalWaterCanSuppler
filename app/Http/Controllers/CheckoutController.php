@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
 use App\Models\CustomerAddress;
 use App\Models\DeliveryPincode;
 use App\Models\Order;
@@ -80,6 +81,10 @@ class CheckoutController extends Controller
             }
         }
 
+        $branch = Branch::find($branchId) ?? Branch::where('is_primary', true)->first() ?? Branch::first();
+        $chargeNewCustomerDeposit = $branch ? (bool) $branch->charge_new_customer_deposit : false;
+        $depositPerCan = $chargeNewCustomerDeposit ? (float) ($branch->new_customer_deposit_amount ?: 150.00) : 0.00;
+
         $subtotal = $cart->calculateSubtotal();
         $depositAmount = $cart->calculateDepositAmount();
         $exchangeableCount = $cart->totalExchangeableCansCount();
@@ -101,7 +106,8 @@ class CheckoutController extends Controller
         return view('checkout.index', compact(
             'cart', 'profile', 'addresses', 'deliveryDates', 'slots', 
             'initialDate', 'subtotal', 'deliveryCharge', 'depositAmount', 
-            'exchangeableCount', 'totalPayable', 'previousDue', 'allowPayLater', 'totalLitres'
+            'exchangeableCount', 'totalPayable', 'previousDue', 'allowPayLater', 'totalLitres',
+            'chargeNewCustomerDeposit', 'depositPerCan'
         ));
     }
 

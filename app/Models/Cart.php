@@ -82,7 +82,7 @@ class Cart extends Model
 
     /**
      * Compute refundable container deposit amount for new customers
-     * (only applied when customer does not have empty cans to return)
+     * (only applied when customer does not have empty cans to return and branch policy charges deposit)
      */
     public function calculateDepositAmount(): float
     {
@@ -90,10 +90,17 @@ class Cart extends Model
             return 0.00;
         }
 
+        $branch = $this->branch ?? Branch::where('is_primary', true)->first() ?? Branch::first();
+        if ($branch && ! (bool) $branch->charge_new_customer_deposit) {
+            return 0.00;
+        }
+
         return (float) $this->items->filter(function ($item) {
             return $item->product->requires_can_exchange;
-        })->sum(function ($item) {
-            $depositPerCan = (float) ($item->product->canType?->deposit_amount ?? 150.00);
+        })->sum(function ($item) use ($branch) {
+            $depositPerCan = ($branch && (float) $branch->new_customer_deposit_amount > 0)
+                ? (float) $branch->new_customer_deposit_amount
+                : (float) ($item->product->canType?->deposit_amount ?? 150.00);
             return $item->quantity * $depositPerCan;
         });
     }

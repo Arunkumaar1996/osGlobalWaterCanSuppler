@@ -207,6 +207,8 @@ class UserManagementAndSettingsTest extends TestCase
             'city' => 'Chennai',
             'state' => 'Tamil Nadu',
             'pincode' => '600096',
+            'charge_new_customer_deposit' => '1',
+            'new_customer_deposit_amount' => '175.00',
         ]);
 
         $response->assertRedirect();
@@ -217,6 +219,8 @@ class UserManagementAndSettingsTest extends TestCase
             'name' => 'Chennai Prime Tech Hub',
             'code' => 'CHN-PRIME-01',
             'pincode' => '600096',
+            'charge_new_customer_deposit' => 1,
+            'new_customer_deposit_amount' => 175.00,
         ]);
     }
 

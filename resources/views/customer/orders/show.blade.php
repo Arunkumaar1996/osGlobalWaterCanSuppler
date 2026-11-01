@@ -195,7 +195,7 @@
                 <div class="flex items-center justify-between text-slate-600">
                     <span>Can Exchange</span>
                     <span class="font-semibold text-slate-900">
-                        {{ $order->has_empty_cans_to_exchange ? '1:1 Exchange (' . $order->empty_cans_expected . ' empties)' : 'New Customer (No empties required)' }}
+                        {{ $order->has_empty_cans_to_exchange ? '1:1 Equal Exchange (' . $order->empty_cans_expected . ' empties)' : 'New Customer (0 empties • ' . ($order->deposit_amount > 0 ? 'Deposit Paid' : 'Water Only') . ')' }}
                     </span>
                 </div>
                 <div class="flex items-center justify-between text-slate-600">

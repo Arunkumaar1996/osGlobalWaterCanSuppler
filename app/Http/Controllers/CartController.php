@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
 use App\Models\Product;
 use App\Services\CartService;
 use Illuminate\Http\JsonResponse;
@@ -27,6 +28,10 @@ class CartController extends Controller
             $branchId
         );
 
+        $branch = Branch::find($branchId) ?? Branch::where('is_primary', true)->first() ?? Branch::first();
+        $chargeNewCustomerDeposit = $branch ? (bool) $branch->charge_new_customer_deposit : false;
+        $depositPerCan = $chargeNewCustomerDeposit ? (float) ($branch->new_customer_deposit_amount ?: 150.00) : 0.00;
+
         $subtotal = $cart->calculateSubtotal();
         $totalLitres = $cart->calculateTotalLitres();
         $hasExchanges = $cart->hasExchangeableCans();
@@ -36,7 +41,8 @@ class CartController extends Controller
 
         return view('cart.index', compact(
             'cart', 'subtotal', 'totalLitres', 'hasExchanges', 
-            'exchangeableCount', 'depositAmount', 'totalPayable'
+            'exchangeableCount', 'depositAmount', 'totalPayable',
+            'chargeNewCustomerDeposit', 'depositPerCan'
         ));
     }
 

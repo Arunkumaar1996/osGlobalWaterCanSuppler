@@ -103,17 +103,17 @@
                             <label class="p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3 {{ $cart->has_empty_cans_to_exchange ? 'border-brand-500 bg-brand-50/50 ring-2 ring-brand-500/20' : 'border-slate-200 hover:border-slate-300' }}">
                                 <input type="radio" name="has_empty_cans_to_exchange" value="1" onchange="document.getElementById('exchangeModeForm').submit()" {{ $cart->has_empty_cans_to_exchange ? 'checked' : '' }} class="mt-1 text-brand-600 focus:ring-brand-500">
                                 <div class="text-xs">
-                                    <span class="font-bold text-slate-900 text-sm block">Yes, I have empty cans (1:1 Exchange)</span>
+                                    <span class="font-bold text-slate-900 text-sm block">Yes, I have empty cans (1:1 Equal Exchange)</span>
                                     <span class="text-slate-500 block mt-1 leading-normal">
-                                        Hand over {{ $exchangeableCount ?? $cart->totalExchangeableCansCount() }} empty can(s) to our delivery driver upon delivery.
+                                        Hand over {{ $exchangeableCount ?? $cart->totalExchangeableCansCount() }} empty can(s) to our delivery driver in exchange for {{ $exchangeableCount ?? $cart->totalExchangeableCansCount() }} refilled can(s).
                                     </span>
                                     <span class="inline-block mt-2 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-100 text-emerald-800">
-                                        Can Deposit: ₹0 (Refill Water Only)
+                                        Can Deposit: ₹0 (Water Only &bull; 1:1 Equal Exchange)
                                     </span>
                                 </div>
                             </label>
 
-                            <!-- Option 2: New Customer / No Empty Cans (Requires Refundable Security Deposit) -->
+                            <!-- Option 2: New Customer / No Empty Cans -->
                             <label class="p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3 {{ !$cart->has_empty_cans_to_exchange ? 'border-brand-500 bg-brand-50/50 ring-2 ring-brand-500/20' : 'border-slate-200 hover:border-slate-300' }}">
                                 <input type="radio" name="has_empty_cans_to_exchange" value="0" onchange="document.getElementById('exchangeModeForm').submit()" {{ !$cart->has_empty_cans_to_exchange ? 'checked' : '' }} class="mt-1 text-brand-600 focus:ring-brand-500">
                                 <div class="text-xs">
@@ -121,12 +121,21 @@
                                         <span class="font-bold text-slate-900 text-sm block">No, I'm a new customer</span>
                                         <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-brand-100 text-brand-700">New User</span>
                                     </div>
-                                    <span class="text-slate-500 block mt-1 leading-normal">
-                                        No empty cans? A refundable deposit of ₹150/can is added. 100% refundable when you return cans later.
-                                    </span>
-                                    <span class="inline-block mt-2 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-100 text-amber-800">
-                                        Refundable Deposit: +₹{{ number_format(($exchangeableCount ?? $cart->totalExchangeableCansCount()) * 150, 2) }}
-                                    </span>
+                                    @if(!empty($chargeNewCustomerDeposit))
+                                        <span class="text-slate-500 block mt-1 leading-normal">
+                                            No empty cans? A refundable deposit of ₹{{ number_format($depositPerCan ?? 150, 2) }}/can is added. 100% refundable upon return.
+                                        </span>
+                                        <span class="inline-block mt-2 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-100 text-amber-800">
+                                            Refundable Deposit: +₹{{ number_format(($exchangeableCount ?? $cart->totalExchangeableCansCount()) * ($depositPerCan ?? 150), 2) }}
+                                        </span>
+                                    @else
+                                        <span class="text-slate-500 block mt-1 leading-normal">
+                                            No empty cans? Zero bottle deposit collected! As a new customer, you pay <strong>ONLY for the water refill</strong> (0 empty cans collected).
+                                        </span>
+                                        <span class="inline-block mt-2 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                                            Deposit Waived: ₹0.00 (Water Refill Only)
+                                        </span>
+                                    @endif
                                 </div>
                             </label>
                         </form>
@@ -156,14 +165,14 @@
                             <div class="flex items-center justify-between text-amber-700 bg-amber-50 p-2.5 rounded-xl border border-amber-200">
                                 <div>
                                     <span class="font-bold block">Can Security Deposit</span>
-                                    <span class="text-[10px] text-amber-600">₹150 &times; {{ $exchangeableCount ?? $cart->totalExchangeableCansCount() }} cans (100% Refundable)</span>
+                                    <span class="text-[10px] text-amber-600">₹{{ number_format($depositPerCan ?? 150, 2) }} &times; {{ $exchangeableCount ?? $cart->totalExchangeableCansCount() }} cans (100% Refundable)</span>
                                 </div>
                                 <span class="font-black text-xs text-amber-900">+₹{{ number_format($depositAmount, 2) }}</span>
                             </div>
                         @else
                             <div class="flex items-center justify-between text-slate-600">
                                 <span>Bottle Deposit</span>
-                                <span class="text-emerald-600 font-bold">₹0.00 (1:1 Exchange)</span>
+                                <span class="text-emerald-600 font-bold">₹0.00 ({{ $cart->has_empty_cans_to_exchange ? '1:1 Equal Exchange' : 'Water Refill Only' }})</span>
                             </div>
                         @endif
 

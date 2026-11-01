@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Branch;
 use App\Models\Cart;
 use App\Models\CustomerAddress;
 use App\Models\DeliveryPincode;
@@ -71,6 +72,10 @@ class OrderService
             ? (bool) $hasEmptyCansToExchange
             : (bool) ($cart->has_empty_cans_to_exchange ?? true);
 
+        $branch = $cart->branch ?? Branch::find($profile->branch_id) ?? Branch::where('is_primary', true)->first() ?? Branch::first();
+        $chargeDeposit = $branch ? (bool) $branch->charge_new_customer_deposit : false;
+        $branchDepositPerCan = $branch ? (float) $branch->new_customer_deposit_amount : 0.00;
+
         $subtotal = 0.00;
         $taxTotal = 0.00;
         $totalLitres = 0.00;
@@ -90,8 +95,10 @@ class OrderService
 
             if ($product->requires_can_exchange) {
                 $exchangeableCount += $item->quantity;
-                if (! $hasEmptyCansToExchange) {
-                    $canDeposit = (float) ($product->canType?->deposit_amount ?? 150.00);
+                if (! $hasEmptyCansToExchange && $chargeDeposit) {
+                    $canDeposit = $branchDepositPerCan > 0
+                        ? $branchDepositPerCan
+                        : (float) ($product->canType?->deposit_amount ?? 150.00);
                     $depositAmount += ($item->quantity * $canDeposit);
                 }
             }
